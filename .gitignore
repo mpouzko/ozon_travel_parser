@@ -1,4 +1,4 @@
-cache/
+cache/*.*
 *.py
 *.json
 ozontravelparser_v1.php
