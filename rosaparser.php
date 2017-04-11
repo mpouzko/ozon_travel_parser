@@ -15,7 +15,7 @@ class RosaParser
     ];
     private $hotelIds = [
          
-        1  => [
+        0  => [
             "name" => "Radisson Роза Хутор",
             "id"   => 'radisson-rosa-khutor',
         ],
@@ -27,7 +27,7 @@ class RosaParser
             "name" => "Mercure Роза Хутор",
             "id"   => 'mercure-rosa-khutor',
         ],
-       3 => [
+        3 => [
             "name" => "Golden Tulip Роза Хутор",
             "id"   => 'golden-tulip-rosa-khutor',
         ],
@@ -130,7 +130,7 @@ class RosaParser
                                                 continue;
                                             }
 
-                                            $path = __DIR__ . "/cache/" . md5($url) . "2017-04-10" . ".cache";
+                                            $path = __DIR__ . "/cache/" . md5($url) . date("Y-m-d") . ".cache";
                                             if (!is_file($path) || filesize($path) <= 0) {
                                                 file_put_contents($path, file_get_contents($url));
                                             }
