@@ -130,7 +130,7 @@ class RosaParser
                                                 continue;
                                             }
 
-                                            $path = __DIR__ . "/cache/" . md5($url) . date("Y-m-d") . ".cache";
+                                            $path = __DIR__ . "/cache/" . md5($url) . "2017-04-10" . ".cache";
                                             if (!is_file($path) || filesize($path) <= 0) {
                                                 file_put_contents($path, file_get_contents($url));
                                             }
@@ -142,22 +142,21 @@ class RosaParser
 
                                             foreach ($html->find('div.offersTable tbody > tr.mainTable ') as $room) {
                                                 //$tariffs   = [];
-                                                $room_name = trim( $room->find('td.n1 > h3.roomName', 0)->plaintext );
-                                                if (strlen($room_name) < 1) {
-                                                    $room_name = "None";
+                                                $tmp = trim( $room->find('td.n1 > h3.roomName', 0)->plaintext );
+                                                $tariffs = '';
+                                                foreach ( $room->find('td.n2 > ul > li span' )  as $tariff) {
+                                                    $tariffs .= $tariff->plaintext." ";
+                                                }
+
+                                                if (strlen($tmp) > 1) {
+                                                    $room_name = $tmp;
                                                 }
 
                                                 
                                                 $price = trim( $room->find("td.n4 > span",0)->plaintext );
 
-                                                $this->log["data"][]=[
-                                                    'hotel' => $hotelName,
-                                                    'room' => $room_name,
-                                                    'persons' => $person,
-                                                    'food' => $foodType,
-                                                    'date' => $i->format("d-m-Y"),
-                                                    'price' => $price
-                                                ];
+                                                $this->log["data"][$hotelName][$room_name][$person][$foodType][trim($tariffs)][$i->format("d-m-Y")]=$price;
+                                                    
                                             }
                                         } catch (Exception $e) {
 
@@ -221,7 +220,8 @@ class RosaParser
             0 => "Отель",
             1 => "Номер",
             2 => "Человек",
-            3 => "Питание"
+            3 => "Питание",
+            4 => "Тариф"
         ];
         //$dates = [];
         for ($i = clone ($dateStart); $i <= $dateEnd; $i->modify("+1 day")) {
@@ -230,43 +230,55 @@ class RosaParser
         }
 
         $writer->writeSheetRow('Sheet1', $header); //sheet name here
+// $this->log["data"][$hotelName][$room_name][$person][$foodType][$i->format("d-m-Y")]=$price;
 
         foreach ($this->log["data"] as $hotel_name => $rooms_list) {
             foreach ($rooms_list as $room_name => $persons) {
-                foreach ($persons as $person_qty => $dates) {
+                foreach ($persons as $person_qty => $food_types) {
+                    foreach ($food_types as $food_type => $tariffs) {
+                        foreach ($tariffs as $tariff_name => $dates) {
 
-                    $rows   = [];
-                    $rows[] = [
-                        0 => $hotel_name,
-                        1 => $room_name,
-                        2 => $person_qty,
-                    ];
-                    foreach ($dates as $date => $tariffs) {
-                        $date_index = array_search($date, $header);
-                        foreach ($tariffs as $tariff) {
-                            $inserted = 0;
-                            foreach ($rows as &$row) {
-                                if ( !array_key_exists($date_index, $row) && $inserted == 0 ) {
-                                    $row[$date_index] = $tariff["price"];
-                                    $inserted         = 1;
-                                }
-                            }
 
-                            if ( $inserted == 0 ) {
-                                $rows[] = [
-                                    0           => $hotel_name,
-                                    1           => $room_name,
-                                    2           => $person_qty,
-                                    $date_index => $tariff["price"],
-                                ];
+                            
+                            $row = [
+                                0 => $hotel_name,
+                                1 => $room_name,
+                                2 => $person_qty,
+                                3 => $food_type,
+                                4 => $tariff_name
+
+                            ];
+                            foreach ($dates as $date => $price) {
+
+                                $date_index = array_search($date, $header);
+                                $row[$date_index] = $price;
+                               /* foreach ($tariffs as $tariff) {
+                                    $inserted = 0;
+                                    foreach ($rows as &$row) {
+                                        if ( !array_key_exists($date_index, $row) && $inserted == 0 ) {
+                                            $row[$date_index] = $tariff["price"];
+                                            $inserted         = 1;
+                                        }
+                                    }
+
+                                    if ( $inserted == 0 ) {
+                                        $rows[] = [
+                                            0           => $hotel_name,
+                                            1           => $room_name,
+                                            2           => $person_qty,
+                                            $date_index => $tariff["price"],
+                                        ];
+                                    }
+         
+                                }*/
                             }
- 
+                      
+                           
+                            
+                                $this->normalize($row, count($header),5);
+                                $writer->writeSheetRow('Sheet1', $row);
+                            
                         }
-                    }
-                   
-                    foreach ($rows as &$row) {
-                        $this->normalize($row, count($header),4);
-                        $writer->writeSheetRow('Sheet1', $row);
                     }
 
                 }
