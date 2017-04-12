@@ -4,3 +4,7 @@ cache/*.*
 ozontravelparser_v1.php
 __index.php
 b.php
+*.cache
+gp*.php
+gp.php
+cookie*.txt
