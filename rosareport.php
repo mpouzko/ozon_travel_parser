@@ -10,3 +10,5 @@ $parser -> write_data('rosa');
 $parser -> save_to_xls_local('rosa');
 echo "----done-----";
 
+//clear old cache
+exec("find ".__DIR__."/cache/*.* -ctime +7 -delete");

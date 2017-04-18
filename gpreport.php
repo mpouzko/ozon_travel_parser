@@ -10,3 +10,5 @@ $parser -> write_data('gp');
 $parser -> save_to_xls_local('gp');
 echo "----done-----\n\r";
 
+//clear old cache
+exec("find ".__DIR__."/cache/*.* -ctime +7 -delete");

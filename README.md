@@ -1,3 +1,5 @@
+v 1.3
+added cleaning old cache
 
 v1.2
 added cli scripts for automated report preparation
