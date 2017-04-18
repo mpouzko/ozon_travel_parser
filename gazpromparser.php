@@ -216,16 +216,16 @@ class GazpromParser
         return $this->log;
     }
 
-    public function write_data()
+    public function write_data($folder='')
     {
         $filename = sprintf(
-            "polyanaski_com_start%s_end%s_req%s.json",
-
+            "polyanaski_com_req%s_start%s_end%s.json",
+            date("Y-m-d"),
             $this->dateStart,
-            $this->dateEnd,
-            date("Y-m-d-His")
+            $this->dateEnd
+            
         );
-        file_put_contents($filename, json_encode($this->log));
+        file_put_contents(__DIR__."/{$folder}/{$filename}", json_encode($this->log));
     }
 
     private function normalize(array &$array,   $size, $offset=0)
@@ -310,6 +310,80 @@ class GazpromParser
  
         $writer->writeToStdOut();
         exit(0);
+       
+    }
+    public function save_to_xls_local($folder = '')
+    {
+        
+        include_once __DIR__ . '/lib/xls_writer/xlsxwriter.class.php';
+        ini_set('display_errors', 0);
+        ini_set('log_errors', 1);
+        error_reporting(E_ALL & ~E_NOTICE);
+        $filename = "res".date("Y.m.d").".xlsx";
+        header('Content-disposition: attachment; filename="' . XLSXWriter::sanitize_filename($filename) . '"');
+        header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        header('Content-Transfer-Encoding: binary');
+        header('Cache-Control: must-revalidate');
+        header('Pragma: public');
+        $writer = new XLSXWriter();
+        $writer->setAuthor('polyanaski vs. m.puzko');
+
+        $dateStart = date_create_from_format('Y-m-d', $this->dateStart);
+        $dateEnd   = date_create_from_format('Y-m-d', $this->dateEnd);
+        $interval  = $this->interval;
+
+        $header = [
+            0 => "Отель",
+            1 => "Номер",
+            2 => "Человек",
+            3 => "Тариф"
+        ];
+        //$dates = [];
+        for ($i = clone ($dateStart); $i <= $dateEnd; $i->modify("+1 day")) {
+            $header[] = $i->format("d-m-Y");
+            //$dates[]  = $i->format("d-m-Y");
+        }
+
+        $writer->writeSheetRow('Sheet1', $header); //sheet name here
+//   $this->log["data"][$hotelName][$room_name][$person][$tariff_hash][$i->format("d-m-Y")]=$price;
+
+
+        foreach ($this->log["data"] as $hotel_name => $rooms_list) {
+            foreach ($rooms_list as $room_name => $persons) {
+                foreach ($persons as $person_qty => $tariffs ) {
+                    
+                        foreach ($tariffs as $tariff_hash => $dates) {
+                            $tariff_name = $this->log["tariffs"][$tariff_hash];
+                            $row = [
+                                0 => $hotel_name,
+                                1 => $room_name,
+                                2 => $person_qty,
+                                3 => $tariff_name
+
+                            ];
+                            foreach ($dates as $date => $price) {
+
+                                $date_index = array_search($date, $header);
+                                $row[$date_index] = $price;
+                                
+                            }
+                      
+                           
+                            
+                                $this->normalize($row, count($header),4);
+                                $writer->writeSheetRow('Sheet1', $row);
+                            
+                        }
+                    
+
+                }
+            }
+
+        }
+
+ 
+        $writer->writeToFile(__DIR__."/{$folder}/{$filename}");
+       
        
     }
 
